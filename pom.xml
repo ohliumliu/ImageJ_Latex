@@ -64,17 +64,17 @@
 
 	<developers>
 		<developer>
-			<id>dscho</id>
-			<name>Johannes Schindelin</name>
-			<email>johannes.schindelin@gmx.de</email>
-			<url>http://loci.wisc.edu/people/johannes-schindelin</url>
-			<organization>UW-Madison LOCI</organization>
-			<organizationUrl>http://loci.wisc.edu/</organizationUrl>
+			<id>ohliumliu</id>
+			<name>Yu Liu</name>
+			<email>yul.liuyu@gmail.com</email>
+			<url>www.its.caltech.edu/~yul</url>
+			<organization></organization>
+			<organizationUrl></organizationUrl>
 			<roles>
-				<role>architect</role>
-				<role>developer</role>
+				<role></role>
+				<role></role>
 			</roles>
-			<timezone>-6</timezone>
+			<timezone></timezone>
 		</developer>
 	</developers>
 
