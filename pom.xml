@@ -12,11 +12,11 @@
 	</parent>
 
 	<groupId>sc.fiji</groupId>
-	<artifactId>Process_Pixels</artifactId>
+	<artifactId>ImageJ_Latex</artifactId>
 	<version>1.0.0</version>
 
-	<name>plugins/Process_Pixels.jar</name>
-	<description>A Maven project implementing an ImageJ 1.x plugin</description>
+	<name>plugins/ImageJ_Latex</name>
+	<description></description>
 
 	<dependencies>
 		<dependency>
@@ -55,7 +55,8 @@
 					</execution>
 				</executions>
 				<configuration>
-					<mainClass>Process_Pixels</mainClass>
+					<mainClass>ImageJ_Latex</mainClass>
+                                        
 				</configuration>
 			</plugin>
 		</plugins>
@@ -90,10 +91,10 @@
 	</repositories>
 
 	<scm>
-		<connection>scm:git:git://github.com/imagej/minimal-ij1-plugin</connection>
-		<developerConnection>scm:git:git@github.com:imagej/minimal-ij1-plugin</developerConnection>
+		<connection>scm:git:git@github.com:ohliumliu/ImageJ_Latex.git</connection>
+		<developerConnection>scm:git:git@github.com:ohliumliu/ImageJ_Latex.git</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/imagej/minimal-ij1-plugin</url>
+		<url>https://github.com/ohliumliu/ImageJ_Latex</url>
 	</scm>
 
 </project>
