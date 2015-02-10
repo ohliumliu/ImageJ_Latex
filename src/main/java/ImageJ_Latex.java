@@ -17,32 +17,54 @@ import ij.*;
 import ij.process.*;
 import ij.gui.*;
 import ij.plugin.PlugIn;
+import java.awt.Image;
+import javax.imageio.ImageIO;
 
-/**
- * ProcessPixels
- *
- * A template for processing each pixel of either
- * GRAY8, GRAY16, GRAY32 or COLOR_RGB images.
- *
- * @author The Fiji Team
- */
+/* Acknowledgement
+1. www.texify.com
+2. mimeTeX
+3. shuiguan@mitbbs.com
+4. http://www.codecogs.com/latex/eqneditor.php
+*/
+
+/* To do list
+1. More options: background, etc
+*/
+
+/* Known problem
+1. a_\textrm{b} is wrong, use a_{\textrm{b}}. Need to be like this on www.texify.com itself.
+   it is fixed after switching to codecogs engine
+2. To insert into indexed color images, need to convert it to RGB first. This shouldn't lose any information.
+*/
+
+
 public class ImageJ_Latex implements PlugIn {
 
 	public void run(String arg) {
 
 
-		/* set up gui */
-		//String url_string = "http://www.texify.com/img/%5CLARGE%5C%211_b.gif";
-		//String input=IJ.getString("latex code","D=\\frac{k_{\\textrm{B}}T}{6\\pi\\eta r}");
 		String inputconvert="";
+		//Major GUI window
 		GenericDialog gd=new GenericDialog("ImageJ_Latex");
+		
+		//Help message
+		gd.addMessage("Input latex math expression below.\n" +
+			"The rendered equation will be displayed as a new image.\n" +
+			"You will have the choice of copy it to any existing windows.\n" +
+			"It is recommended to adjust the size of the rendered image by DPI rather than scaling.");
+		//Input field for latex expression. Default is Boltzmann-Einstein relation
 		gd.addStringField("latex math expression:", "D=\\frac{k_{\\textrm{B}}T}{6\\pi\\eta r}",20);
+		
 		
 
 		/* user input about scaling */
+		String[] dpiArray = {"50", "80", "100", "110", "120", "150", "200", "300"};
+		gd.addChoice("Rendering resolution (DPI)", dpiArray, dpiArray[dpiArray.length-1]);
+		
 		gd.addCheckbox("Scale the image using the following dimension?",false);
 		gd.addNumericField("Width:",300,3);
 		gd.addNumericField("Height:",200,3);
+		//gd.addStringField("Resoltuion (DPI)", "300", 3);
 		gd.addCheckbox("Preserv aspect ratio", true);
 		String[] width_or_height={"width","height"};
 		gd.addChoice("Preserve aspect ratio according to:", width_or_height,"width");
@@ -50,7 +72,7 @@ public class ImageJ_Latex implements PlugIn {
 		
 
 		
-	
+                //TODO
 		//gd.addCheckbox("Use current background and foreground colors?",false);
 
 		gd.showDialog();
@@ -59,21 +81,24 @@ public class ImageJ_Latex implements PlugIn {
 			IJ.error("Bye bye!");
 			return;
 		}
-
 		/* end of setting up GUI*/
 		
-		/* get user input*/
+		/* read user input*/
 		String input=gd.getNextString();
 		boolean ifScale=gd.getNextBoolean();
 		double width=gd.getNextNumber();
 		double height=gd.getNextNumber();
+		String dpi=dpiArray[gd.getNextChoiceIndex()];
 		boolean preserve_ratio=gd.getNextBoolean();
 		int width_or_height_choice=gd.getNextChoiceIndex();
-		
-		
-		//boolean color_choice=gd.getNextBoolean();
 		/* end of getting user input*/
 		
+                /*  Why is it required to convert Latex input to UTF
+		 *   1. For version 1-5 of this plugin, www.texify.com was used to render equation.
+		 *      The output of this website is an image whose URL contains the UTF-8 encoding of input Latex string.
+		 *   2. For version 6 of this plugin,  http://www.codecogs.com/latex/eqneditor.php is used to render equation.    
+		 *      Encoding doesn't seem to be a requirement, but it doesn't seem to hurt either.
+		 */
 		try{
 		inputconvert=URLEncoder.encode(input,"UTF-8");
 		//IJ.showMessage(inputconvert);
@@ -81,6 +106,7 @@ public class ImageJ_Latex implements PlugIn {
 		{IJ.error("Your input is not compatible with my understanding of URL encoding.");
 		}
 		
+		// For codecogs, this conversion is not required, but doesn't hurt to have it.
 		/*replace + by space, then replace by space by %20*/
 		/*replace works with characters, replaceAll is for strings, but replaceAll("+","%20") doesn't work. Probably because
 		+ means something special in the context of string or regular expression*/
@@ -89,29 +115,57 @@ public class ImageJ_Latex implements PlugIn {
 		/**/
 		
 		/*replace %2F by /  */
-		/* For some reason, %2F is not treated as / by texify.com, but a plain / works*/
-		//IJ.showMessage(inputconvert);
+		/* For some reason, %2F is not treated as / by texify.com, but a plain / works
+		*  This is not an issue with codecogs
+		*/
 		inputconvert=inputconvert.replaceAll("%2F","/");
-		//IJ.showMessage(inputconvert);
-		/* */
 
-		String texifybaseurl="http://www.texify.com/img/%5CLARGE%5C%21";
-		//String leebase="http://latex.codecogs.com/gif.latex?";
+		//String texifybaseurl="http://www.texify.com/img/%5CLARGE%5C%21";
+		//String codecogsBase="http://latex.codecogs.com/png.latex?";
 		
-		String input_url=texifybaseurl+inputconvert+".gif";
+		String codecogsBase="http://latex.codecogs.com/png.latex?%5Cdpi%7B"+dpi+"%7D%20";
+		
+		//String input_url=texifybaseurl+inputconvert+".gif";
+		String input_url = codecogsBase + inputconvert;
 
 
-		//IJ.showMessage(input_url);
+		/* Texify stops working now, switching to latex.codecogs.com
+		 * The resulting image from codecogs doesn't have its file name as part of the URL to the image.
+		 * ImageJ's import function thus not working. Use Javax imageIO module.
+		 * TODO: Check ImageJ's source to see if it can be improved. 
+		*/
+		Image image = null;
+		try {
+  		  URL url = new URL(input_url);
+   		  image = ImageIO.read(url);
+		} catch (IOException e) {
+		   IJ.error("I am not able to get output from http://latex.codecogs.com/latex/eqneditor.php.\nPlease check if the site is working.");
+		}
+		/* The following is not working after texify is down
 		ImagePlus good_image=IJ.openImage(input_url);
-
-
+		*/	
+                
+                
+                /* Process the image
+		 *  ImageJ images are ImagePlus objects.
+		 *  ImagesPlus has two parts: Image and ImageProcessor.
+		 *  Image is the actual data and ImageProcessor is the operation to be applied.
+		 */		
+		ImagePlus good_image = new ImagePlus();
+		good_image.setImage(image);
+		//good_image.show();
 		
 		/* Modify the image*/
-		/* Convert to RGB and then back to Byte in order to force the scaling */		
+		/* Convert to RGB and then back to Byte in order to force the scaling
+		 * This part is still not 100% clear to me. Concatenated commands not working the same
+		 * way as separate ones.
+		 */		
 		ImageProcessor good_image_p=good_image.getProcessor();
+		//good_image_p.convertToRGB().convertToByte(true);
 		ImageProcessor good_image_p2=good_image_p.convertToRGB();
 		good_image_p=good_image_p2.convertToByte(true);
 		good_image.setProcessor("scaling",good_image_p);
+
 
 		/* scale ? */
 		if (ifScale){
@@ -140,10 +194,9 @@ public class ImageJ_Latex implements PlugIn {
 
 
 
-		/* user input about copy/pastee */
+		/* handle user input about copy/pastee */
 		int[] windowList= WindowManager.getIDList();
 		if (windowList!=null){
-			//IJ.showMessage("copy");
 			GenericDialog copy_gd=new GenericDialog("Copy to existing images");
 			String[] windowTitles=new String[windowList.length];
 			for (int i=0; i< windowList.length; i++){
@@ -156,27 +209,14 @@ public class ImageJ_Latex implements PlugIn {
 			copy_gd.addChoice("Copy to:", windowTitles, windowTitles[0]);
 			copy_gd.showDialog();
 			
-			
-		/* end of user input about copy/past */
-
-
 		/* copy/paste */
 			int copyTarget=copy_gd.getNextChoiceIndex();
-			//Rectangle allROI=Rectangle(ip_toCopy.getWidth(),ip_toCopy.getHeight());
-			//good_image.getProcessor().convertToRGB();
+			
 			ImagePlus target_ip=WindowManager.getImage(windowList[copyTarget]);
 			if (target_ip.isInvertedLut()) IJ.showMessage("target image is using inverted LUT!");
 			ImageWindow targetWindow=target_ip.getWindow();
 			WindowManager.setCurrentWindow(targetWindow);
-			//int[] target_pixels=(int[]) target_ip.getProcessor().getPixels();
-			//byte[] target_pixels_sorted=Arrays.sort(target_pixels);
-			//Arrays.sort(target_pixels);
-			//int target_max=target_pixels[target_pixels.length-1];
-			//IJ.showMessage(IJ.d2s((double)target_max));
-
 			
-			
-
 			/* convert good_image to target format */
 			int target_type=target_ip.getType();
 			ImageConverter ic=new ImageConverter(good_image);
@@ -192,13 +232,7 @@ public class ImageJ_Latex implements PlugIn {
 			}
 			good_image.setRoi(0,0, good_image.getWidth(), good_image.getHeight());
 			good_image.copy(false);
-			//IJ.showMessage("");			
-			
-
 			targetWindow.paste();
-		
-
-
 		/* end of copy/paste */
 
 		}
@@ -212,12 +246,12 @@ public class ImageJ_Latex implements PlugIn {
 	}
 	
 	/* method to scale */
-	ImageProcessor scale(ImageProcessor ip, boolean ifScale, boolean preserve_ratio, int width_or_height_choice, double width, double height){
+	ImageProcessor scale(ImageProcessor imgProc, boolean ifScale, boolean preserve_ratio, int width_or_height_choice, double width, double height){
 
-		ip.setInterpolate(true);
+		imgProc.setInterpolate(true);
 		if (ifScale){
-		double current_width=ip.getWidth();
-		double current_height=ip.getHeight();
+		double current_width=imgProc.getWidth();
+		double current_height=imgProc.getHeight();
 		double ratio=1;
 		if (preserve_ratio){
 			switch (width_or_height_choice) {
@@ -227,11 +261,9 @@ public class ImageJ_Latex implements PlugIn {
 		width=current_width*ratio;
 		height=current_height*ratio;
 		}
-		ip=ip.resize((int) width, (int) height);
-		//ip.smooth();
-		
+		imgProc=imgProc.resize((int) width, (int) height);
 		}
-		return ip;
+		return imgProc;
 	}	
 
 	public static void main(String[] args) {
