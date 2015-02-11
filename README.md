@@ -5,5 +5,6 @@ and automatically selected for further operation, such as moving with the arrow 
 
 This module is built with Netbeans as a Maven project.
 
-The source java file can be compiled within ImageJ. I am working on updating Fiji site
+Ideally one would check out this repository and build it locally to get the executable.
+Still the source java file can be compiled within ImageJ. I am working on updating Fiji site
 for direct installation from there.
