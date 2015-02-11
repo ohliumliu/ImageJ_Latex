@@ -233,6 +233,7 @@ public class ImageJ_Latex implements PlugIn {
 			good_image.setRoi(0,0, good_image.getWidth(), good_image.getHeight());
 			good_image.copy(false);
 			targetWindow.paste();
+
 		/* end of copy/paste */
 
 		}
